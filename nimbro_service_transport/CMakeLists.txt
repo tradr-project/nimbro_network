@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 find_package(catkin REQUIRED COMPONENTS
   message_generation
+  ros_babel_fish
   roscpp
   roslib
   rqt_gui_cpp
