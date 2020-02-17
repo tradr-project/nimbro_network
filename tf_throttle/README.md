@@ -16,4 +16,7 @@ Parameters:
  - `frame_ids` (list of strings): Only these frame IDs will be republished. 
                                   Empty list means all frames are republished.
                                   (default: [])
+ - `send_static_tfs` (bool): Whether to include static transforms (default: true).
+ - `only_child_frames` (bool): If true, only frames from `frame_id` will only 
+                               match against child frames.
 

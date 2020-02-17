@@ -20,6 +20,7 @@ std::unique_ptr<tf2_ros::Buffer> g_tf;
 ros::Publisher pub;
 std::set<std::string> frameIds;
 bool sendStatic;
+bool onlyChildFrames;
 
 void sendTransforms()
 {
@@ -36,7 +37,7 @@ void sendTransforms()
             continue;
 
         if (!frameIds.empty()) {
-            if (frameIds.find(frame) == frameIds.end() && frameIds.find(parentFrame) == frameIds.end())
+            if (frameIds.find(frame) == frameIds.end() && (onlyChildFrames || frameIds.find(parentFrame) == frameIds.end()))
                 continue;
         }
 
@@ -94,6 +95,7 @@ int main(int argc, char** argv)
     }
 
     sendStatic = nh.param("send_static_tfs", true);
+    onlyChildFrames = nh.param("only_child_frames", false);
 
     ros::Timer timer = nh.createTimer(
             ros::Duration(1.0 / rate),
