@@ -301,11 +301,11 @@ void TCPSender::messageCallback(const std::string& topic, MessageOptions& option
 	if (std::find(m_ignoredPubs.begin(), m_ignoredPubs.end(), messagePublisher) != m_ignoredPubs.end())
 		return;
 
-	send(topic, options, event.getMessage());
+	send(topic, messagePublisher, options, event.getMessage());
 }
 
 
-void TCPSender::send(const std::string& topic, MessageOptions& options, const topic_tools::ShapeShifter::ConstPtr& shifter, const bool reconnect)
+void TCPSender::send(const std::string& topic, const std::string& publisher, MessageOptions& options, const topic_tools::ShapeShifter::ConstPtr& shifter, const bool reconnect)
 {
 #if WITH_CONFIG_SERVER
 	if (! (*m_enableTopic[topic])() )
@@ -336,7 +336,7 @@ void TCPSender::send(const std::string& topic, MessageOptions& options, const to
 	}
 
 	if (options.flags & TCP_FLAG_LATCHED)
-		this->m_latchedMessages[topic] = std::make_pair(shifter, options);
+		this->m_latchedMessages[std::make_pair(topic, publisher)] = std::make_pair(shifter, options);
 
 	m_packet.resize(
 		sizeof(TCPHeader) + topic.length() + type.length() + maxDataSize
@@ -473,7 +473,7 @@ void TCPSender::send(const std::string& topic, MessageOptions& options, const to
 	ROS_ERROR("Could not send TCP packet. Dropping message from topic %s!", topic.c_str());
 	if (options.flags & TCP_FLAG_LATCHED)
   {
-	  this->m_unsentLatchedMessages.emplace_back(topic, options, shifter, reconnect);
+	  this->m_unsentLatchedMessages.emplace_back(topic, publisher, options, shifter, reconnect);
   }
 }
 
@@ -503,7 +503,7 @@ bool TCPSender::sendLatchedCallback(std_srvs::Empty::Request& request, std_srvs:
 void TCPSender::sendLatched() {
     // send all latched messages
     for (auto& it : this->m_latchedMessages) {
-        this->send(it.first, it.second.second, it.second.first);
+        this->send(it.first.first, it.first.second, it.second.second, it.second.first);
     }
 }
 
@@ -519,8 +519,8 @@ void TCPSender::resendUnsentLatched()
 
   for (auto& tuple : copy)
   {
-    auto options = std::get<1>(tuple);
-    this->send(std::get<0>(tuple), options, std::get<2>(tuple), std::get<3>(tuple));
+    auto options = std::get<2>(tuple);
+    this->send(std::get<0>(tuple), std::get<1>(tuple), options, std::get<3>(tuple), std::get<4>(tuple));
   }
 }
 

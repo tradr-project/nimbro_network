@@ -48,7 +48,7 @@ public:
 
 	bool connect();
 
-    void send(const std::string& topic, MessageOptions& options, const topic_tools::ShapeShifter::ConstPtr& shifter, const bool reconnect = true);
+    void send(const std::string& topic, const std::string& publisher, MessageOptions& options, const topic_tools::ShapeShifter::ConstPtr& shifter, const bool reconnect = true);
     void messageCallback(const std::string& topic, MessageOptions& options,
         const ros::MessageEvent<topic_tools::ShapeShifter const>& shifter);
     void sendLatched();
@@ -71,8 +71,9 @@ private:
     std::vector<std::string> m_ignoredPubs;
   std::recursive_mutex m_sendMutex;
 
-	std::map<std::string, std::pair<topic_tools::ShapeShifter::ConstPtr, MessageOptions> > m_latchedMessages;
-	std::vector<std::tuple<std::string, MessageOptions, topic_tools::ShapeShifter::ConstPtr, bool>> m_unsentLatchedMessages;
+  //! key = topic:caller_id, value = message:options
+	std::map<std::pair<std::string, std::string>, std::pair<topic_tools::ShapeShifter::ConstPtr, MessageOptions> > m_latchedMessages;
+	std::vector<std::tuple<std::string, std::string, MessageOptions, topic_tools::ShapeShifter::ConstPtr, bool>> m_unsentLatchedMessages;
 
 #if WITH_CONFIG_SERVER
 	std::map<std::string, boost::shared_ptr<config_server::Parameter<bool>>> m_enableTopic;
