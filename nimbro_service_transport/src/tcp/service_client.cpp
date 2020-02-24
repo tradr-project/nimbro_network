@@ -188,7 +188,7 @@ bool ServiceClient::call(const std::string& name, ros::ServiceCallbackHelperCall
 
 			if(connect(m_fd, (const sockaddr*)&m_addr, m_addrLen) != 0)
 			{
-				ROS_WARN("ServiceClient could not connect to server: %s", strerror(errno));
+				ROS_WARN("ServiceClient could not connect to %s:%i: %s", m_remote.c_str(), m_remotePort, strerror(errno));
 				sleep(1);
 
 				close(m_fd);

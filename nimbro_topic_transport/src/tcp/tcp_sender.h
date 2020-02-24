@@ -15,6 +15,7 @@
 #endif
 
 #include <map>
+#include <mutex>
 
 #include "ros/message_event.h"
 
@@ -54,6 +55,7 @@ public:
     bool sendLatchedCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 private:
 	void updateStats();
+	void resendUnsentLatched();
 
 	ros::NodeHandle m_nh;
 	int m_fd;
@@ -67,8 +69,10 @@ private:
 	std::vector<uint8_t> m_packet;
 	std::vector<uint8_t> m_compressionBuf;
     std::vector<std::string> m_ignoredPubs;
+  std::mutex m_sendMutex;
 
 	std::map<std::string, std::pair<topic_tools::ShapeShifter::ConstPtr, MessageOptions> > m_latchedMessages;
+	std::vector<std::tuple<std::string, MessageOptions, topic_tools::ShapeShifter::ConstPtr, bool>> m_unsentLatchedMessages;
 
 #if WITH_CONFIG_SERVER
 	std::map<std::string, boost::shared_ptr<config_server::Parameter<bool>>> m_enableTopic;
@@ -78,6 +82,7 @@ private:
 	ros::Publisher m_pub_stats;
 	ros::WallDuration m_statsInterval;
 	ros::WallTimer m_statsTimer;
+	ros::Timer m_resendLatchedTimer;
 	uint64_t m_sentBytesInStatsInterval;
 	std::map<std::string, uint64_t> m_topicSendBytesInStatsInteral;
     ros::ServiceServer m_latchedMessageRequestServer;

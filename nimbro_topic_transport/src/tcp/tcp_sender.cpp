@@ -185,6 +185,9 @@ TCPSender::TCPSender()
 	);
 	m_statsTimer.start();
 
+	m_resendLatchedTimer = m_nh.createTimer(ros::Duration(10),
+	    boost::bind(&TCPSender::resendUnsentLatched, this));
+
     m_latchedMessageRequestServer = m_nh.advertiseService(
             "publish_latched_messages", &TCPSender::sendLatchedCallback, this);
 }
@@ -308,6 +311,8 @@ void TCPSender::send(const std::string& topic, MessageOptions& options, const to
 	if (! (*m_enableTopic[topic])() )
 		return;
 #endif
+
+	std::lock_guard<std::mutex> lock(m_sendMutex);
 
 	std::string type = shifter->getDataType();
 	std::string md5 = shifter->getMD5Sum();
@@ -466,6 +471,10 @@ void TCPSender::send(const std::string& topic, MessageOptions& options, const to
 	}
 
 	ROS_ERROR("Could not send TCP packet. Dropping message from topic %s!", topic.c_str());
+	if (options.flags & TCP_FLAG_LATCHED)
+  {
+	  this->m_unsentLatchedMessages.emplace_back(topic, options, shifter, reconnect);
+  }
 }
 
 void TCPSender::updateStats()
@@ -496,6 +505,23 @@ void TCPSender::sendLatched() {
     for (auto& it : this->m_latchedMessages) {
         this->send(it.first, it.second.second, it.second.first);
     }
+}
+
+void TCPSender::resendUnsentLatched()
+{
+  auto copy = this->m_unsentLatchedMessages;
+  this->m_unsentLatchedMessages.clear();
+
+  if (!copy.empty())
+  {
+    ROS_INFO("Trying to resend %lu unsent latched messages", copy.size());
+  }
+
+  for (auto& tuple : copy)
+  {
+    auto options = std::get<1>(tuple);
+    this->send(std::get<0>(tuple), options, std::get<2>(tuple), std::get<3>(tuple));
+  }
 }
 
 }
