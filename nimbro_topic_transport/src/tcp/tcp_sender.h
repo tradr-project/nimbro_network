@@ -69,7 +69,7 @@ private:
 	std::vector<uint8_t> m_packet;
 	std::vector<uint8_t> m_compressionBuf;
     std::vector<std::string> m_ignoredPubs;
-  std::mutex m_sendMutex;
+  std::recursive_mutex m_sendMutex;
 
 	std::map<std::string, std::pair<topic_tools::ShapeShifter::ConstPtr, MessageOptions> > m_latchedMessages;
 	std::vector<std::tuple<std::string, MessageOptions, topic_tools::ShapeShifter::ConstPtr, bool>> m_unsentLatchedMessages;

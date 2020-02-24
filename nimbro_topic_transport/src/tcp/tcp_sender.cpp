@@ -312,7 +312,7 @@ void TCPSender::send(const std::string& topic, MessageOptions& options, const to
 		return;
 #endif
 
-	std::lock_guard<std::mutex> lock(m_sendMutex);
+	std::lock_guard<std::recursive_mutex> lock(m_sendMutex);
 
 	std::string type = shifter->getDataType();
 	std::string md5 = shifter->getMD5Sum();
