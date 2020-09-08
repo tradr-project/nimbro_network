@@ -117,7 +117,14 @@ sensor_msgs::CompressedImagePtr H264Encoder::handleImage(
 
     ros::Time start = ros::Time::now();
 
-    cv_bridge::CvImageConstPtr cvImg = cv_bridge::toCvShare(img, "bgr8");
+    cv_bridge::CvImageConstPtr cvImg;
+    try
+    {
+       cvImg = cv_bridge::toCvShare(img, "bgr8");
+    } catch (cv_bridge::Exception& e) {
+	ROS_ERROR_THROTTLE(5.0, "Failed converting image to bgr8: %s", e.what());
+        return nullptr;
+    }
 
     this->data->aspectRatio = ((double)cvImg->image.rows) / cvImg->image.cols;
 
